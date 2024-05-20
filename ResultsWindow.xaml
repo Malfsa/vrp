@@ -1,0 +1,17 @@
+﻿<Window x:Class="WpfApp2.ResultsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Results" Height="300" Width="400">
+    <Grid>
+        <StackPanel>
+            <TextBlock Text="Оптимальное значение для базовой матрицы:"/>
+            <TextBlock Text="{Binding BasicMatrixResult}"/>
+            <TextBlock Text="Оптимальное значение для разреженной матрицы:"/>
+            <TextBlock Text="{Binding SparseMatrixResult}"/>
+            <TextBlock Text="Точность решения:"/>
+            <TextBlock Text="{Binding SolutionAccuracy}"/>
+            <TextBlock Text="Путь и транспорта:"/>
+            <TextBlock Text="{Binding TransportPath}"/>
+        </StackPanel>
+    </Grid>
+</Window>
