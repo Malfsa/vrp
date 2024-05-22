@@ -19,9 +19,15 @@ namespace WpfApp2
     /// </summary>
     public partial class ResultsWindow : Window
     {
-        public ResultsWindow()
+        public ResultsWindow(ResultsViewModel viewModel)
         {
             InitializeComponent();
+            DataContext = viewModel;
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
         }
     }
 }

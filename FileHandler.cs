@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -10,58 +11,104 @@ namespace WpfApp2
 {
     public class FileHandler
     {
-        public static void SaveToFile(string filePath, string selectedMatrixType, int numberOfCities, int numberOfTransports, double numberOfPercent, ObservableCollection<ObservableCollection<double>> matrixFields, ObservableCollection<int> transportFields)
+        public static void SaveToFile(string filePath, string selectedMatrixType, int numberOfCities, int numberOfTransports, double numberOfPercent, ObservableCollection<ObservableCollection<MatrixElement>> matrixFields, ObservableCollection<ObservableInt> transportFields)
         {
             using (StreamWriter writer = new StreamWriter(filePath))
             {
                 // Сохранение типа матрицы
-                writer.WriteLine($"SelectedMatrixType,{selectedMatrixType}");
+             //   writer.WriteLine($"SelectedMatrixType,{selectedMatrixType}");
 
                 // Сохранение количества городов и транспорта
-                writer.WriteLine($"NumberOfCities,{numberOfCities}");
-                writer.WriteLine($"NumberOfTransports,{numberOfTransports}");
-                writer.WriteLine($"NumberOfPercent,{numberOfPercent}");
-
+                writer.WriteLine($"Количество городов: {numberOfCities}");
+                writer.WriteLine($"Количество транспортных средств: {numberOfTransports}");
+                writer.WriteLine($"Процент замены чисел в разреженной матрице: {numberOfPercent}");
+                // Сохранение транспортных полей
+                writer.WriteLine("Минимальное количество посещенных городов для каждого транспортного средства:");
+                foreach(var row in transportFields)
+                {
+                    writer.WriteLine(row);
+                }
                 // Сохранение матрицы
-                writer.WriteLine("Matrix:");
+                writer.WriteLine("Матрица:");
                 foreach (var row in matrixFields)
                 {
-                    writer.WriteLine(string.Join(",", row));
+                    writer.WriteLine(string.Join(" ", row));
                 }
 
-                // Сохранение транспортных полей
-                writer.WriteLine("TransportFields:");
-                writer.WriteLine(string.Join(",", transportFields));
+                
             }
         }
 
-        public static void LoadFromFile(string filePath, out string selectedMatrixType, out int numberOfCities, out int numberOfTransports, out double numberOfPercent, out ObservableCollection<ObservableCollection<double>> matrixFields, out ObservableCollection<int> transportFields)
+        public static void LoadFromFile(string filePath, out string selectedMatrixType,  out int numberOfCities, out int numberOfTransports, out int numberOfPercent, out ObservableCollection<int> transportFields, out ObservableCollection<ObservableCollection<double>> matrixFields)
         {
-            using (StreamReader reader = new StreamReader(filePath))
-            {
-                selectedMatrixType = reader.ReadLine().Split(',')[1];
-                numberOfCities = int.Parse(reader.ReadLine().Split(',')[1]);
-                numberOfTransports = int.Parse(reader.ReadLine().Split(',')[1]);
-                numberOfPercent = double.Parse(reader.ReadLine().Split(',')[1]);
+            selectedMatrixType = string.Empty;
+            numberOfCities = 0;
+            numberOfTransports = 0;
+            numberOfPercent = 0;
+            transportFields = new ObservableCollection<int>();
+            matrixFields = new ObservableCollection<ObservableCollection<double>>();
 
-                // Чтение матрицы
-                matrixFields = new ObservableCollection<ObservableCollection<double>>();
-                reader.ReadLine(); // Пропустить строку "Matrix:"
-                for (int i = 0; i < numberOfCities; i++)
+            var lines = File.ReadAllLines(filePath).Where(line => !string.IsNullOrWhiteSpace(line)).ToArray();
+
+            if (Path.GetExtension(filePath).ToLower() == ".tsp")
+            {
+                selectedMatrixType = lines.First(line => line.StartsWith("EDGE_WEIGHT_TYPE")).Split(':')[1].Trim();
+                numberOfCities = int.Parse(lines.First(line => line.StartsWith("DIMENSION")).Split(':')[1].Trim());
+
+                if (selectedMatrixType == "EUC_2D")
                 {
-                    var row = new ObservableCollection<double>(reader.ReadLine().Split(',').Select(double.Parse));
+
+                    int matrixStartIndex = Array.FindIndex(lines, line => line.StartsWith("NODE_COORD_SECTION")) + 1;
+                    for (int i = matrixStartIndex; i < matrixStartIndex + numberOfCities; i++)
+                    {
+                        var coordinates = lines[i].Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).Skip(1).Select(s => double.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                        var row = new ObservableCollection<double>(coordinates);
+                        matrixFields.Add(row);
+                    }
+                }
+                else if (selectedMatrixType == "EXPLICIT")
+                {
+                    int matrixStartIndex = Array.FindIndex(lines, line => line.StartsWith("EDGE_WEIGHT_SECTION")) + 1;
+                    for (int i = matrixStartIndex; i < matrixStartIndex + numberOfCities; i++)
+                    {
+                        var distances = lines[i].Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).Select(s => double.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                        var row = new ObservableCollection<double>(distances);
+                        matrixFields.Add(row);
+                    }
+                }
+            }
+            else {
+                //var lines = File.ReadAllLines(filePath).Where(line => !string.IsNullOrWhiteSpace(line)).ToArray();
+                //selectedMatrixType = (lines.First(line => line.StartsWith("Тип матрицы:")).Split(':')[1].Trim());
+                // Read number of cities
+                numberOfCities = int.Parse(lines.First(line => line.StartsWith("Количество городов:")).Split(':')[1].Trim());
+
+                // Read number of transports
+                numberOfTransports = int.Parse(lines.First(line => line.StartsWith("Количество транспортных средств:")).Split(':')[1].Trim());
+
+                // Read percentage of number replacement in sparse
+                // 
+                numberOfPercent = int.Parse(lines.First(line => line.StartsWith("Процент замены чисел в разреженной матрице:")).Split(':')[1].Trim());
+
+                // Read minimum number of visited cities for each transport
+                int transportFieldsIndex = Array.FindIndex(lines, line => line.StartsWith("Минимальное количество посещенных городов для каждого транспортного средства:"));
+                for (int i = transportFieldsIndex + 1; i < lines.Length; i++)
+                {
+                    if (lines[i].StartsWith("Матрица:")) break;
+                    transportFields.Add(int.Parse(lines[i].Trim()));
+                }
+
+                // Read matrix
+                int matrixIndex = Array.FindIndex(lines, line => line.StartsWith("Матрица:")) + 1;
+                for (int i = matrixIndex; i < lines.Length; i++)
+                {
+                    var row = new ObservableCollection<double>(lines[i].Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).Select(s => double.Parse(s, CultureInfo.InvariantCulture)));
                     matrixFields.Add(row);
                 }
-
-                // Чтение транспортных полей
-                transportFields = new ObservableCollection<int>();
-                reader.ReadLine(); // Пропустить строку "TransportFields:"
-                var transportData = reader.ReadLine().Split(',').Select(int.Parse);
-                foreach (var item in transportData)
-                {
-                    transportFields.Add(item);
-                }
             }
         }
+
+
+           
     }
 }

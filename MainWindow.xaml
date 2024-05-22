@@ -29,6 +29,7 @@
     <Window.DataContext>
         <local:MainViewModel/>
     </Window.DataContext>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
     <Grid>
         <Menu VerticalAlignment="Top">
             <MenuItem Header="Меню">
@@ -37,6 +38,7 @@
                     <MenuItem Header="2 метод" Command="{Binding Path=SelectMethod2Command}"/>
                 </MenuItem>
                 <MenuItem Header="Сохранение" Command="{Binding Path=SaveCommand}"/>
+                <MenuItem Header="Заполнить данные из файла" Command="{Binding  Path=LoadCommand}"/>
                 <MenuItem Header="Справка" />
             </MenuItem>
         </Menu>
@@ -78,22 +80,25 @@
                     </Binding>
                 </TextBox.Text>
             </TextBox>
-            <TextBlock Text="Минимальное количество городов:" Margin="5" Width="500" Visibility="{Binding IsTransportVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-            <ItemsControl ItemsSource="{Binding Path=TransportFields}">
+            <TextBlock Text="Минимальное количество городов:" Margin="5" Width="500" 
+                       Visibility="{Binding IsTransportVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            <ItemsControl ItemsSource="{Binding TransportFields}" Visibility="{Binding IsTransportVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <TextBox Text="{Binding Path=.}" Margin="5" Width="500" ToolTip="Минимальное количество городов"/>
+                        <TextBox Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                 Margin="5" Width="500" ToolTip="Минимальное количество городов"/>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
             <TextBlock Text="Матрица:" Margin="5" Width="500" Visibility="{Binding IsMatrixVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-            <ItemsControl ItemsSource="{Binding Path=MatrixFields}">
+            
+                <ItemsControl ItemsSource="{Binding MatrixFields, UpdateSourceTrigger=PropertyChanged}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <ItemsControl ItemsSource="{Binding Path=.}">
+                        <ItemsControl ItemsSource="{Binding}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBox Text="{Binding Path=.}" Margin="5" Width="50" />
+                                    <TextBox Text="{Binding Path=Value, Mode=TwoWay}" Margin="5" Width="50"/>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                             <ItemsControl.ItemsPanel>
@@ -105,7 +110,13 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+            
+
+
+
+
             <Button Content="Решение" Command="{Binding Path=SolveCommand}" Margin="5" Width="200"/>
         </StackPanel>
     </Grid>
+    </ScrollViewer>
 </Window>

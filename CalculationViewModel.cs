@@ -1,7 +1,11 @@
-﻿using System;
+﻿using ILOG.Concert;
+using ILOG.CPLEX;
+using Microsoft.Win32;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Input;
 
 namespace WpfApp2
@@ -11,49 +15,71 @@ namespace WpfApp2
         private string _selectedMatrixType;
         private int _numberOfCities;
         private int _numberOfTransports;
-        private double _numberOfPercent;
+        private int _numberOfPercent; // Изменен тип на double
         private bool _isMethodSelected;
-        private bool isRandomFillEnabled;
-        private bool isMatrixVisible;
-        private bool isTransportVisible;
+        private bool _isRandomFillEnabled;
+        private bool _isMatrixVisible;
+        private bool _isTransportVisible;
+        private ObservableCollection<ObservableInt> _transportFields;
+        // private ObservableCollection<ObservableCollection<double>> _matrixFields;
+        private ObservableCollection<ObservableCollection<MatrixElement>> _matrixFields;
+        private readonly Random random = new Random();
 
-
-      Random random = new Random();
         public MainViewModel()
         {
             MatrixTypes = new ObservableCollection<string> { "Матрица координат", "Матрица расстояний" };
-            TransportFields = new ObservableCollection<int>();
-            MatrixFields = new ObservableCollection<ObservableCollection<double>>();
+            TransportFields = new ObservableCollection<ObservableInt>();
+            // MatrixFields = new ObservableCollection<ObservableCollection<double>>();
+            MatrixFields = new ObservableCollection<ObservableCollection<MatrixElement>>();
             SelectMethod1Command = new RelayCommand(param => SelectMethod1());
             SelectMethod2Command = new RelayCommand(param => SelectMethod2());
             SaveCommand = new RelayCommand(param => Save());
             SolveCommand = new RelayCommand(param => Solve(), param => CanSolve());
-           // RandomizeMatrixCommand = new RelayCommand(param=>RandomizeMatrix());
-           
-
+            LoadCommand = new RelayCommand(param => Load());
         }
 
         public ObservableCollection<string> MatrixTypes { get; }
+        public ObservableCollection<ObservableInt> TransportFields
+        {
+            get => _transportFields;
+            set
+            {
+                _transportFields = value;
+                OnPropertyChanged();
+            }
+        }
+        public ObservableCollection<ObservableCollection<MatrixElement>> MatrixFields
+        {
+            get { return _matrixFields; }
+            set
+            {
+                _matrixFields = value;
+                OnPropertyChanged();
+            }
+        }
+
 
 
         public bool IsRandomFillEnabled
         {
-            get { return isRandomFillEnabled; }
+            get => _isRandomFillEnabled;
             set
             {
-                isRandomFillEnabled = value;
-              //  OnPropertyChanged(nameof(IsRandomFillEnabled));
+                _isRandomFillEnabled = value;
+                OnPropertyChanged();
                 UpdateMatrixFields();
             }
         }
+
         public string SelectedMatrixType
         {
             get => _selectedMatrixType;
             set
             {
                 _selectedMatrixType = value;
+                // OnPropertyChanged(SelectedMatrixType);
                 OnPropertyChanged();
-                UpdateMatrixFields();
+                // UpdateMatrixFields();
             }
         }
 
@@ -76,11 +102,10 @@ namespace WpfApp2
                 _numberOfTransports = value;
                 OnPropertyChanged();
                 UpdateTransportFields();
-                
             }
         }
 
-        public double NumberOfPercent
+        public int NumberOfPercent // Изменен тип на double
         {
             get => _numberOfPercent;
             set
@@ -99,39 +124,35 @@ namespace WpfApp2
                 OnPropertyChanged();
             }
         }
+
         public bool IsMatrixVisible
         {
-            get { return isMatrixVisible; }
+            get => _isMatrixVisible;
             set
             {
-                if (isMatrixVisible != value)
-                {
-                    isMatrixVisible = value;
-                    OnPropertyChanged(nameof(IsMatrixVisible));
-                }
+                _isMatrixVisible = value;
+                OnPropertyChanged();
             }
         }
 
         public bool IsTransportVisible
         {
-            get { return isTransportVisible; }
+            get => _isTransportVisible;
             set
             {
-                if (isTransportVisible != value)
-                {
-                    isTransportVisible = value;
-                    OnPropertyChanged(nameof(IsTransportVisible));
-                }
+                _isTransportVisible = value;
+                OnPropertyChanged();
             }
         }
-        public ObservableCollection<int> TransportFields { get; }
-        public ObservableCollection<ObservableCollection<double>> MatrixFields { get; }
+    
+     
 
+       
         public ICommand SelectMethod1Command { get; }
         public ICommand SelectMethod2Command { get; }
         public ICommand SaveCommand { get; }
+        public ICommand LoadCommand { get; }
         public ICommand SolveCommand { get; }
-        public ICommand RandomizeMatrixCommand { get; private set; }
 
         private void SelectMethod1()
         {
@@ -145,9 +166,10 @@ namespace WpfApp2
 
         private void Save()
         {
-            // Открытие диалогового окна для выбора пути сохранения
-            Microsoft.Win32.SaveFileDialog saveFileDialog = new Microsoft.Win32.SaveFileDialog();
-            saveFileDialog.Filter = "CSV file (*.csv)|*.csv|All files (*.*)|*.*";
+            Microsoft.Win32.SaveFileDialog saveFileDialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "All Files (*.*)|*.*|Text Files (*.txt)|*.txt"
+            };
             if (saveFileDialog.ShowDialog() == true)
             {
                 FileHandler.SaveToFile(saveFileDialog.FileName, SelectedMatrixType, NumberOfCities, NumberOfTransports, NumberOfPercent, MatrixFields, TransportFields);
@@ -156,39 +178,36 @@ namespace WpfApp2
 
         private void Load()
         {
-            // Открытие диалогового окна для выбора файла загрузки
-            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
-            openFileDialog.Filter = "CSV file (*.csv)|*.csv|All files (*.*)|*.*";
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Filter = "Text file (*.txt)|*.txt|TSP file (*.tsp)|*.tsp|All files (*.*)|*.*"
+            };
             if (openFileDialog.ShowDialog() == true)
             {
-                FileHandler.LoadFromFile(openFileDialog.FileName, out string selectedMatrixType, out int numberOfCities, out int numberOfTransports, out double numberOfPercent, out ObservableCollection<ObservableCollection<double>> matrixFields, out ObservableCollection<int> transportFields);
+                FileHandler.LoadFromFile(openFileDialog.FileName, out string selectedMatrixType, out int numberOfCities, out int numberOfTransports, out int numberOfPercent, out ObservableCollection<int> transportFields, out ObservableCollection<ObservableCollection<double>> loadedMatrixFields);
 
                 SelectedMatrixType = selectedMatrixType;
                 NumberOfCities = numberOfCities;
                 NumberOfTransports = numberOfTransports;
                 NumberOfPercent = numberOfPercent;
-                MatrixFields.Clear();
-                foreach (var row in matrixFields)
-                {
-                    MatrixFields.Add(row);
-                }
+
                 TransportFields.Clear();
                 foreach (var field in transportFields)
                 {
-                    TransportFields.Add(field);
+                    TransportFields.Add(new ObservableInt { Value=int.Parse(field.ToString())});
+                }
+
+                MatrixFields.Clear();
+                foreach (var row in loadedMatrixFields)
+                {
+                    var newRow = new ObservableCollection<MatrixElement>();
+                    foreach (var value in row)
+                    {
+                        newRow.Add(new MatrixElement { Value = value.ToString() });
+                    }
+                    MatrixFields.Add(newRow);
                 }
             }
-        }
-
-        private bool CanSolve()
-        {
-            // Проверка валидности полей
-            return true;
-        }
-
-        private void Solve()
-        {
-            // Логика решения задачи
         }
 
         private void UpdateTransportFields()
@@ -197,7 +216,7 @@ namespace WpfApp2
             TransportFields.Clear();
             for (int i = 0; i < NumberOfTransports; i++)
             {
-                TransportFields.Add(0);
+                TransportFields.Add(new ObservableInt { Value = 0 });
             }
         }
 
@@ -214,50 +233,174 @@ namespace WpfApp2
                 case "Матрица координат":
                     UpdateCoordinateMatrix();
                     break;
-                default:
-                    break;
             }
         }
-
         private void UpdateDistanceMatrix()
         {
             for (int i = 0; i < NumberOfCities; i++)
             {
-                var row = new ObservableCollection<double>();
+                var row = new ObservableCollection<MatrixElement>();
                 for (int j = 0; j < NumberOfCities; j++)
                 {
-                    if (IsRandomFillEnabled)
-                    {
-                        row.Add(random.Next(10, 50));
-                    }
-                    else
-                        row.Add(0.0);
+                    row.Add(new MatrixElement { Value = (IsRandomFillEnabled ? random.Next(10, 50) : 0.0).ToString() });
                 }
                 MatrixFields.Add(row);
             }
         }
-
         private void UpdateCoordinateMatrix()
         {
             for (int i = 0; i < NumberOfCities; i++)
             {
-                var row = new ObservableCollection<double> { 0.0, 0.0 };
-                if (IsRandomFillEnabled)
-                {
-                    row = new ObservableCollection<double> { random.Next(10, 50), random.Next(10, 50) };
-                    MatrixFields.Add(row);
-                }
-                else
-                    MatrixFields.Add(row);
+                var row = new ObservableCollection<MatrixElement>
+        {
+            new MatrixElement { Value = (IsRandomFillEnabled ? random.Next(10, 50) : 0.0).ToString()},
+            new MatrixElement { Value = (IsRandomFillEnabled ? random.Next(10, 50) : 0.0).ToString() }
+        };
+                MatrixFields.Add(row);
             }
         }
 
+        private bool CanSolve()
+        {
 
+            return true;
+        }
 
+        private void Solve()
+        {
+            if (CanSolve())
+            {
+                double[,] matrix = new double[NumberOfCities, NumberOfCities];
+                for (int i = 0; i < NumberOfCities; i++)
+                {
+                    if (SelectedMatrixType == "Матрица координат")
+                    {
+                        for (int j = 0; j < 2; j++)
+                        {
+                            matrix[i, j] = double.Parse(MatrixFields[i][j].Value);
+                        }
+                    }
+                    else if (SelectedMatrixType == "Матрица расстояний")
+                    {
+                        for (int j = 0; j < NumberOfCities; j++)
+                        {
+                            matrix[i, j] = double.Parse(MatrixFields[i][j].Value);
+                        }
+                    }
+                }
 
+                if (SelectedMatrixType == "Матрица координат")
+                {
+                    matrix = ConverCoordinateMatrix.ConvertCoordinatesToDistanceMatrix(matrix);
+                }
 
+                double[,] intMatrix = new double[NumberOfCities, NumberOfCities];
+                for (int i = 0; i < NumberOfCities; i++)
+                {
+                    for (int j = 0; j < NumberOfCities; j++)
+                    {
+                        intMatrix[i, j] = matrix[i, j];
+                    }
+                }
 
+                int[] transportWeights = TransportFields.Select(o => o.Value).ToArray();
 
+                try
+                {
+                    Cplex_Prog cplexProg = new Cplex_Prog();
+                    var (cplex, x, Distance) = cplexProg.MyCplex(NumberOfCities, NumberOfTransports, matrix, intMatrix, transportWeights);
+
+                    if (cplex != null)
+                    {
+                        ResultsViewModel resultViewModel = new ResultsViewModel
+                        {
+                            OptimalValue = $"Оптимальное значение: {cplex.GetObjValue()}",
+                            RouteMatrix = new ObservableCollection<string>(FormatRouteMatrix(cplex, x)),
+                            Routes = new ObservableCollection<string>(FormatRoutes(cplex, x)),
+                            Distances = new ObservableCollection<string>(FormatDistances(cplex, Distance))
+                        };
+
+                        ResultsWindow resultWindow = new ResultsWindow(resultViewModel);
+                        resultWindow.Show();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Решение не найдено.");
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    MessageBox.Show("Ошибка: " + ex.Message);
+                }
+            }
+        }
+        private IEnumerable<string> FormatRouteMatrix(Cplex cplex, INumVar[][][] x)
+        {
+            for (int i = 0; i < x.Length; i++)
+            {
+                for (int j = 0; j < x[i].Length; j++)
+                {
+                    for (int k = 0; k < x[i][j].Length; k++)
+                    {
+                        if (cplex.GetValue(x[i][j][k]) > 0.5)
+                        {
+                            yield return $"{i} : {j}-{k}: {cplex.GetValue(x[i][j][k])}";
+                        }
+                    }
+                }
+            }
+        }
+
+        private IEnumerable<string> FormatRoutes(Cplex cplex, INumVar[][][] x)
+        {
+            for (int i = 0; i < x.Length; i++)
+            {
+                yield return $"Транспортное средство {i + 1}: ";
+
+                var routes = new List<(int From, int To)>();
+                for (int j = 0; j < x[i].Length; j++)
+                {
+                    for (int k = 0; k < x[i][j].Length; k++)
+                    {
+                        if (cplex.GetValue(x[i][j][k]) > 0.5)
+                        {
+                            routes.Add((j, k));
+                        }
+                    }
+                }
+
+                // Поиск маршрута начиная с узла 0
+                var sortedRoutes = new List<(int From, int To)>();
+                int current = 0;
+
+                while (routes.Count > 0)
+                {
+                    var nextRoute = routes.FirstOrDefault(r => r.From == current);
+                    if (nextRoute.Equals(default((int, int))))
+                    {
+                        break;
+                    }
+                    sortedRoutes.Add(nextRoute);
+                    routes.Remove(nextRoute);
+                    current = nextRoute.To;
+                }
+
+                // Форматирование вывода
+                foreach (var route in sortedRoutes)
+                {
+                    yield return $"{route.From+1} -> {route.To+1}";
+                }
+                yield return "\n";
+            }
+        }
+
+        private IEnumerable<string> FormatDistances(Cplex cplex, INumVar[] Distance)
+        {
+            for (int i = 0; i < Distance.Length; i++)
+            {
+                yield return $"Транспортное средство {i + 1}: {cplex.GetValue(Distance[i])}\n";
+            }
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
