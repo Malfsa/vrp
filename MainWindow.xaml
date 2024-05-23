@@ -90,7 +90,10 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <TextBlock Text="Матрица:" Margin="5" Width="500" Visibility="{Binding IsMatrixVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <CheckBox Content="Поиск оптимальных маршрутов для базовой матрицы" Margin="5" Width="500" IsChecked="{Binding IsBaseMatrix}" />
+                <CheckBox Content="Поиск оптимальных маршрутов для разреженной матрицы" Margin="5" Width="500" IsChecked="{Binding IsReplaceMatrix}" />
+            
+                <TextBlock Text="Матрица:" Margin="5" Width="500" Visibility="{Binding IsMatrixVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             
                 <ItemsControl ItemsSource="{Binding MatrixFields, UpdateSourceTrigger=PropertyChanged}">
                 <ItemsControl.ItemTemplate>

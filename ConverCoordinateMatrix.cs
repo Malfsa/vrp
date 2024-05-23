@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace WpfApp2
 {
@@ -42,7 +43,19 @@ namespace WpfApp2
 
         private static double CalculateEuclideanDistance(double x1, double y1, double x2, double y2)
         {
-            return Math.Sqrt(Math.Pow(x2 - x1, 2) + Math.Pow(y2 - y1, 2));
+            double distance = Math.Sqrt(Math.Pow(x2 - x1, 2) + Math.Pow(y2 - y1, 2));
+
+            // Check if the distance has a remainder when divided by 1 (i.e., is not an integer)
+            if (distance % 1 != 0)
+            {
+                // MessageBox.Show(distance.ToString() + " " + (Math.Ceiling(distance)).ToString());
+                // Round up to the nearest integer
+                //  distance = Math.Ceiling(distance);
+                distance = Math.Floor(distance);
+            }
+
+            // Return the distance (either original or rounded up)
+            return distance;
         }
     }
 }

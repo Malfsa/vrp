@@ -1,9 +1,9 @@
 ﻿using ILOG.Concert;
 using ILOG.CPLEX;
 using Microsoft.Win32;
-using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
@@ -24,6 +24,10 @@ namespace WpfApp2
         // private ObservableCollection<ObservableCollection<double>> _matrixFields;
         private ObservableCollection<ObservableCollection<MatrixElement>> _matrixFields;
         private readonly Random random = new Random();
+        private bool isBaseMatrix;
+        private bool isReplaceMatrix;
+        public double[] matrixfun = new double[2];
+        // private double[] _matrixfun=new double[2];
 
         public MainViewModel()
         {
@@ -57,8 +61,6 @@ namespace WpfApp2
                 OnPropertyChanged();
             }
         }
-
-
 
         public bool IsRandomFillEnabled
         {
@@ -94,6 +96,8 @@ namespace WpfApp2
             }
         }
 
+        
+
         public int NumberOfTransports
         {
             get => _numberOfTransports;
@@ -114,7 +118,6 @@ namespace WpfApp2
                 OnPropertyChanged();
             }
         }
-
         public bool IsMethodSelected
         {
             get => _isMethodSelected;
@@ -124,7 +127,6 @@ namespace WpfApp2
                 OnPropertyChanged();
             }
         }
-
         public bool IsMatrixVisible
         {
             get => _isMatrixVisible;
@@ -134,7 +136,6 @@ namespace WpfApp2
                 OnPropertyChanged();
             }
         }
-
         public bool IsTransportVisible
         {
             get => _isTransportVisible;
@@ -144,10 +145,33 @@ namespace WpfApp2
                 OnPropertyChanged();
             }
         }
-    
-     
 
-       
+
+        public bool IsBaseMatrix
+        {
+            get { return isBaseMatrix; }
+            set
+            {
+                if (isBaseMatrix != value)
+                {
+                    isBaseMatrix = value;
+                    OnPropertyChanged(nameof(IsBaseMatrix));
+                }
+            }
+        }
+
+        public bool IsReplaceMatrix
+        {
+            get { return isReplaceMatrix; }
+            set
+            {
+                if (isReplaceMatrix != value)
+                {
+                    isReplaceMatrix = value;
+                    OnPropertyChanged(nameof(IsReplaceMatrix));
+                }
+            }
+        }
         public ICommand SelectMethod1Command { get; }
         public ICommand SelectMethod2Command { get; }
         public ICommand SaveCommand { get; }
@@ -194,7 +218,7 @@ namespace WpfApp2
                 TransportFields.Clear();
                 foreach (var field in transportFields)
                 {
-                    TransportFields.Add(new ObservableInt { Value=int.Parse(field.ToString())});
+                    TransportFields.Add(new ObservableInt { Value = int.Parse(field.ToString()) });
                 }
 
                 MatrixFields.Clear();
@@ -270,69 +294,180 @@ namespace WpfApp2
         {
             if (CanSolve())
             {
-                double[,] matrix = new double[NumberOfCities, NumberOfCities];
-                for (int i = 0; i < NumberOfCities; i++)
+                double[,] matrix = ReadMatrixFromFields();
+              /*  if (SelectedMatrixType == "Матрица координат")
                 {
-                    if (SelectedMatrixType == "Матрица координат")
+                    matrix = ConverCoordinateMatrix.ConvertCoordinatesToDistanceMatrix(matrix);
+                }*/
+                double[,] intMatrix = CreateIntegerMatrix(matrix);
+                int[] transportWeights = GetTransportWeights();
+
+                if (IsBaseMatrix)
+                {
+                    try
+                    {
+                        SolveWithCplex(matrix, intMatrix, transportWeights);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        MessageBox.Show("Ошибка: " + ex.Message);
+                    }
+                }
+                if (IsReplaceMatrix)
+                {
+                    try
+                    {
+                        double [,]cringe= MatrixReplace.ReplaceTopValuesWith(matrix, 200000, NumberOfPercent);
+                        //intMatrix = MatrixReplace.ReplaceTopValuesWith(matrix, 200000, NumberOfPercent);
+                       // intMatrix = CreateIntegerMatrix(matrix);
+                        SolveWithCplex_(intMatrix, cringe, transportWeights);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        MessageBox.Show("Ошибка: " + ex.Message);
+                    }
+                }
+                if ((!IsReplaceMatrix) && (!IsBaseMatrix))
+                {
+                    MessageBox.Show("Выберите матрицы для расчета(базовая, разреженная)");
+                    return;
+                }
+              
+
+            }
+        }
+
+        private double[,] ReadMatrixFromFields()
+        {
+            double[,] matrix = new double[NumberOfCities, NumberOfCities];
+            
+                if (SelectedMatrixType == "Матрица координат")
+                {
+                    for (int i = 0; i < NumberOfCities; i++)
                     {
                         for (int j = 0; j < 2; j++)
                         {
                             matrix[i, j] = double.Parse(MatrixFields[i][j].Value);
-                        }
-                    }
-                    else if (SelectedMatrixType == "Матрица расстояний")
-                    {
-                        for (int j = 0; j < NumberOfCities; j++)
-                        {
-                            matrix[i, j] = double.Parse(MatrixFields[i][j].Value);
-                        }
-                    }
-                }
 
-                if (SelectedMatrixType == "Матрица координат")
-                {
+                        }
+                    }
                     matrix = ConverCoordinateMatrix.ConvertCoordinatesToDistanceMatrix(matrix);
                 }
-
-                double[,] intMatrix = new double[NumberOfCities, NumberOfCities];
+                else if (SelectedMatrixType == "Матрица расстояний")
+                {
                 for (int i = 0; i < NumberOfCities; i++)
                 {
                     for (int j = 0; j < NumberOfCities; j++)
                     {
-                        intMatrix[i, j] = matrix[i, j];
+                        matrix[i, j] = double.Parse(MatrixFields[i][j].Value);
                     }
-                }
-
-                int[] transportWeights = TransportFields.Select(o => o.Value).ToArray();
-
-                try
-                {
-                    Cplex_Prog cplexProg = new Cplex_Prog();
-                    var (cplex, x, Distance) = cplexProg.MyCplex(NumberOfCities, NumberOfTransports, matrix, intMatrix, transportWeights);
-
-                    if (cplex != null)
-                    {
-                        ResultsViewModel resultViewModel = new ResultsViewModel
-                        {
-                            OptimalValue = $"Оптимальное значение: {cplex.GetObjValue()}",
-                            RouteMatrix = new ObservableCollection<string>(FormatRouteMatrix(cplex, x)),
-                            Routes = new ObservableCollection<string>(FormatRoutes(cplex, x)),
-                            Distances = new ObservableCollection<string>(FormatDistances(cplex, Distance))
-                        };
-
-                        ResultsWindow resultWindow = new ResultsWindow(resultViewModel);
-                        resultWindow.Show();
-                    }
-                    else
-                    {
-                        MessageBox.Show("Решение не найдено.");
-                    }
-                }
-                catch (System.Exception ex)
-                {
-                    MessageBox.Show("Ошибка: " + ex.Message);
                 }
             }
+            return matrix;
+        }
+
+        private double[,] CreateIntegerMatrix(double[,] matrix)
+        {
+            double[,] intMatrix = new double[NumberOfCities, NumberOfCities];
+            for (int i = 0; i < NumberOfCities; i++)
+            {
+                for (int j = 0; j < NumberOfCities; j++)
+                {
+                    intMatrix[i, j] = matrix[i, j];
+                }
+            }
+            return intMatrix;
+        }
+
+        private int[] GetTransportWeights()
+        {
+            return TransportFields.Select(o => o.Value).ToArray();
+        }
+
+        private void SolveWithCplex(double[,] matrix, double[,] intMatrix, int[] transportWeights)
+        {
+            Cplex_Prog cplexProg = new Cplex_Prog();
+            var (cplex, x, Distance) = cplexProg.MyCplex(NumberOfCities, NumberOfTransports, matrix, intMatrix, transportWeights);
+
+            if (cplex != null)
+            {
+                matrixfun[0] = cplex.GetObjValue();
+                ResultsViewModel resultViewModel = new ResultsViewModel
+                {
+                    IsBaseMatrix = true,
+                    // OptimalValue = $"Оптимальное значение: {cplex.GetObjValue()}",
+                    OptimalValue = cplex.GetObjValue(),
+                    RouteMatrix = new ObservableCollection<string>(FormatRouteMatrix(cplex, x)),
+                    Routes = new ObservableCollection<string>(FormatRoutes(cplex, x)),
+                    Distances = new ObservableCollection<string>(FormatDistances(cplex, Distance))
+                    //Matrixfun[0] = cplex.GetObjValue();
+                };
+                
+                ResultsWindow resultWindow = new ResultsWindow(resultViewModel);
+                resultWindow.Show();
+            }
+            else
+            {
+                MessageBox.Show("Решение не найдено.");
+            }
+        }
+        private void SolveWithCplex_(double[,] matrix, double[,] intMatrix, int[] transportWeights)
+        {
+          //  double[,] starc = CreateIntegerMatrix(intMatrix);
+            Cplex_Prog cplexProg = new Cplex_Prog();
+            var (cplex, x, Distance) = cplexProg.MyCplex(NumberOfCities, NumberOfTransports, matrix, intMatrix, transportWeights);
+
+
+
+            if (cplex != null)
+            {
+                string accuracy;
+                matrixfun[1] = OptimalForSpirse(cplex, x, matrix);
+                if ((matrixfun[0] != 0) && (matrixfun[1] != 0))
+                {
+                    accuracy = (Math.Abs((matrixfun[1] - matrixfun[0]) / matrixfun[0]) * 100).ToString();
+                }
+                else accuracy = "Расчитайте оптимальное для обеих матриц, чтобы получить точность";
+                ResultsViewModel resultViewModel = new ResultsViewModel
+                {
+                    IsReplaceMatrix= true,
+                    Accuracy = accuracy,
+                    OptimalValue2 =  OptimalForSpirse(cplex, x, matrix),
+                    RouteMatrix2 = new ObservableCollection<string>(FormatRouteMatrix(cplex, x)),
+                    Routes2 = new ObservableCollection<string>(FormatRoutes(cplex, x)),
+                    Distances2 = new ObservableCollection<string>(FormatDistances(cplex, Distance))
+                    
+                };
+                
+                ResultsWindow resultWindow = new ResultsWindow(resultViewModel);
+                resultWindow.Show();
+            }
+            else
+            {
+                MessageBox.Show("Решение не найдено.");
+            }
+        }
+
+        private double OptimalForSpirse(Cplex cplex, INumVar[][][] x, double[,] startc)
+        {
+            double optimalValue = 0;
+            for (int k = 0; k < x.Length; k++)
+            {
+              //  yield return $"Транспортное средство {i + 1}: ";
+
+                var routes = new List<(int From, int To)>();
+                for (int i = 0; i < x[k].Length; i++)
+                {
+                    for (int j = 0; j < x[k][i].Length;j++)
+                    {
+                        if (cplex.GetValue(x[k][i][j]) > 0.5)
+                        {
+                            optimalValue += cplex.GetValue(x[k][i][j]) * startc[i, j];
+                        }
+                    }
+                }
+            }
+            return optimalValue;
         }
         private IEnumerable<string> FormatRouteMatrix(Cplex cplex, INumVar[][][] x)
         {
@@ -344,6 +479,7 @@ namespace WpfApp2
                     {
                         if (cplex.GetValue(x[i][j][k]) > 0.5)
                         {
+
                             yield return $"{i} : {j}-{k}: {cplex.GetValue(x[i][j][k])}";
                         }
                     }
@@ -388,7 +524,7 @@ namespace WpfApp2
                 // Форматирование вывода
                 foreach (var route in sortedRoutes)
                 {
-                    yield return $"{route.From+1} -> {route.To+1}";
+                    yield return $"{route.From + 1} -> {route.To + 1}";
                 }
                 yield return "\n";
             }
