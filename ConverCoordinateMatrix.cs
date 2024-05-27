@@ -45,16 +45,10 @@ namespace WpfApp2
         {
             double distance = Math.Sqrt(Math.Pow(x2 - x1, 2) + Math.Pow(y2 - y1, 2));
 
-            // Check if the distance has a remainder when divided by 1 (i.e., is not an integer)
             if (distance % 1 != 0)
             {
-                // MessageBox.Show(distance.ToString() + " " + (Math.Ceiling(distance)).ToString());
-                // Round up to the nearest integer
-                //  distance = Math.Ceiling(distance);
                 distance = Math.Floor(distance);
             }
-
-            // Return the distance (either original or rounded up)
             return distance;
         }
     }

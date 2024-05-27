@@ -11,6 +11,7 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
 
         <Grid>
+           
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -22,39 +23,64 @@
                     <!-- Добавьте дополнительные строки, если нужно -->
 
                 </Grid.RowDefinitions>
-                <!-- Results for Base Matrix -->
+            
+            <!-- Results for Base Matrix -->
             <StackPanel Grid.Row="1" Margin="10"  Visibility="{Binding IsBaseMatrix,  Converter={StaticResource BooleanToVisibilityConverter}}">
                 <TextBlock Text="Результаты для базовой матрицы:" FontWeight="Bold" Margin="10"/>
 
                 <TextBlock Text="Оптимальное значение маршрута:" FontWeight="Bold" Margin="10"/>
                 <TextBox Text="{Binding OptimalValue}" Margin="10" IsReadOnly="True" TextWrapping="Wrap" />
-
-                <TextBlock Text="Матрица маршрутов:" FontWeight="Bold" Margin="10"/>
-                <ListBox ItemsSource="{Binding RouteMatrix}" Margin="10" Height="150"/>
+               
+                <TextBlock Text="Время расчета оптимального маршрута:" FontWeight="Bold" Margin="10"/>
+                <TextBox Text="{Binding Times}" Margin="10"/>
 
                 <TextBlock Text="Оптимальные маршруты для каждого транспортного средства:" FontWeight="Bold" Margin="10"/>
-                <ListBox ItemsSource="{Binding Routes}" Margin="10" Height="150"/>
-
+                <ListBox ItemsSource="{Binding Routes}" Margin="10" Height="150">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
                 <TextBlock Text="Дистанция пройдённая каждым транспортным средством:" FontWeight="Bold" Margin="10"/>
-                <ListBox ItemsSource="{Binding Distances}" Margin="10" Height="150"/>
+                <ListBox ItemsSource="{Binding Distances}" Margin="10" Height="100">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+
             </StackPanel>
             <StackPanel Grid.Row="2" Margin="10"  Visibility="{Binding IsReplaceMatrix,  Converter={StaticResource BooleanToVisibilityConverter}}">
                 <TextBlock Text="Результаты для разреженной матрицы:" FontWeight="Bold" Margin="10"/>
+                <TextBlock Text="Точность решения:" FontWeight="Bold" Margin="10"  />
+                <TextBlock Text="{Binding Accuracy}" Margin="10" Height="30"/>
+                
                 <TextBlock Text="Оптимальное значение маршрута:" FontWeight="Bold" Margin="10"/>
                 <TextBox Text="{Binding OptimalValue2}" Margin="10" IsReadOnly="True" TextWrapping="Wrap" />
 
-                <TextBlock Text="Матрица маршрутов:" FontWeight="Bold" Margin="10"/>
-                <ListBox ItemsSource="{Binding RouteMatrix2}" Margin="10" Height="150"/>
+                <TextBlock Text="Время расчета оптимального маршрута:" FontWeight="Bold" Margin="10"/>
+                <TextBox Text="{Binding Times2}" Margin="10"/>
 
                 <TextBlock Text="Оптимальные маршруты для каждого транспортного средства:" FontWeight="Bold" Margin="10"/>
-                <ListBox ItemsSource="{Binding Routes2}" Margin="10" Height="150"/>
-
+                <ListBox ItemsSource="{Binding Routes2}" Margin="10" Height="150">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+                </ListBox>
                 <TextBlock Text="Дистанция пройдённая каждым транспортным средством:" FontWeight="Bold" Margin="10"/>
-                <ListBox ItemsSource="{Binding Distances2}" Margin="10" Height="150"/>
-
-                <TextBlock Text="Точность:" FontWeight="Bold" Margin="10"  />
-                <TextBlock Text="{Binding Accuracy}" Margin="10" Height="150"/>
-
+                <ListBox ItemsSource="{Binding Distances2}" Margin="10" Height="100">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+               
             </StackPanel>
 
            

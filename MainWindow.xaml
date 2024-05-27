@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp2"
         mc:Ignorable="d"
-        Title="MainWindow" Height="800" Width="800">
+        Title="Оптимизация маршрутов транспортных средcтв" Height="800" Width="800">
     <Window.Resources>
         <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <Style TargetType="TextBox">
@@ -30,96 +30,91 @@
         <local:MainViewModel/>
     </Window.DataContext>
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-    <Grid>
-        <Menu VerticalAlignment="Top">
-            <MenuItem Header="Меню">
+        <Grid>
+            <Menu VerticalAlignment="Top">
                 <MenuItem Header="Решение">
-                    <MenuItem Header="1 метод" Command="{Binding Path=SelectMethod1Command}"/>
-                    <MenuItem Header="2 метод" Command="{Binding Path=SelectMethod2Command}"/>
+                    <MenuItem Header="CPLEX" Command="{Binding Path=SelectMethod1Command}"/>
+                    <MenuItem Header="Генетический алгоритм" Command="{Binding Path=SelectMethod2Command}"/>
                 </MenuItem>
-                <MenuItem Header="Сохранение" Command="{Binding Path=SaveCommand}"/>
-                <MenuItem Header="Заполнить данные из файла" Command="{Binding  Path=LoadCommand}"/>
+                <MenuItem Header="Заполнить данные из...">
+                    <MenuItem Header="Заполнить данные из файла" Command="{Binding  Path=LoadCommand}"/>
+                    <MenuItem Header="Заполнить данные из базы данных" Command="{Binding  Path=LoadCommand}"/>
+                </MenuItem>
+                <MenuItem Header="Сохранить...">
+                    <MenuItem Header="Сохранить вводные данные" Command="{Binding Path=SaveCommand}"/>
+                    <MenuItem Header="Сохранить результаты" Command="{Binding Path=SaveResCommand}"/>
+                </MenuItem>
                 <MenuItem Header="Справка" />
-            </MenuItem>
-        </Menu>
+            </Menu>
 
-        <StackPanel Name="InputPanel" VerticalAlignment="Top" Margin="10,30,10,10"
-                    Visibility="{Binding IsMethodSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <ComboBox ItemsSource="{Binding Path=MatrixTypes}" SelectedItem="{Binding Path=SelectedMatrixType}" Margin="5" Width="500" />
-            <CheckBox Content="Заполнить матрицу расстояний случайными числами" Margin="5" Width="500" IsChecked="{Binding IsRandomFillEnabled}" />
-            <TextBox Name="CitiesTextBox" Margin="5" Width="500" ToolTip="Количество городов"
-                     PreviewTextInput="NumberValidationTextBox" PreviewKeyDown="OnPreviewKeyDown">
-                <TextBox.Text>
-                    <Binding Path="NumberOfCities" UpdateSourceTrigger="PropertyChanged">
-                        <Binding.ValidationRules>
-                            <local:NumericValidationRule Type="Integer"/>
-                        </Binding.ValidationRules>
-                    </Binding>
-                </TextBox.Text>
-            </TextBox>
-           
-
-            <TextBox Name="TransportsTextBox" Margin="5" Width="500" ToolTip="Количество транспорта"
-                     PreviewTextInput="NumberValidationTextBox" PreviewKeyDown="OnPreviewKeyDown">
-                <TextBox.Text>
-                    <Binding Path="NumberOfTransports" UpdateSourceTrigger="PropertyChanged">
-                        <Binding.ValidationRules>
-                            <local:NumericValidationRule Type="Integer"/>
-                        </Binding.ValidationRules>
-                    </Binding>
-                </TextBox.Text>
-            </TextBox>
-
-            <TextBox Name="PercentTextBox" Margin="5" Width="500" ToolTip="Процент разреженности матрицы"
-                     PreviewTextInput="NumberValidationTextBox" PreviewKeyDown="OnPreviewKeyDown">
-                <TextBox.Text>
-                    <Binding Path="NumberOfPercent" UpdateSourceTrigger="PropertyChanged">
-                        <Binding.ValidationRules>
-                            <local:NumericValidationRule Type="Double"/>
-                        </Binding.ValidationRules>
-                    </Binding>
-                </TextBox.Text>
-            </TextBox>
-            <TextBlock Text="Минимальное количество городов:" Margin="5" Width="500" 
-                       Visibility="{Binding IsTransportVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-            <ItemsControl ItemsSource="{Binding TransportFields}" Visibility="{Binding IsTransportVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <TextBox Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                 Margin="5" Width="500" ToolTip="Минимальное количество городов"/>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <StackPanel Name="InputPanel" VerticalAlignment="Top" Margin="10,30,10,10"
+                         Visibility="{Binding IsMethodSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ComboBox ItemsSource="{Binding Path=MatrixTypes}" SelectedItem="{Binding Path=SelectedMatrixType}" Margin="5" Width="500" />
+                <CheckBox Content="Заполнить матрицу расстояний случайными числами" Margin="5" Width="500" IsChecked="{Binding IsRandomFillEnabled}" />
+                <TextBox Name="CitiesTextBox" Margin="5" Width="500" ToolTip="Количество городов"
+                         PreviewTextInput="NumberValidationTextBox" PreviewKeyDown="OnPreviewKeyDown">
+                    <TextBox.Text>
+                        <Binding Path="NumberOfCities" UpdateSourceTrigger="PropertyChanged">
+                            <Binding.ValidationRules>
+                                <local:NumericValidationRule Type="Integer"/>
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+                <TextBox Name="TransportsTextBox" Margin="5" Width="500" ToolTip="Количество транспорта"
+                         PreviewTextInput="NumberValidationTextBox" PreviewKeyDown="OnPreviewKeyDown">
+                    <TextBox.Text>
+                        <Binding Path="NumberOfTransports" UpdateSourceTrigger="PropertyChanged">
+                            <Binding.ValidationRules>
+                                <local:NumericValidationRule Type="Integer"/>
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+                <TextBox Name="PercentTextBox" Margin="5" Width="500" ToolTip="Процент разреженности матрицы"
+                         PreviewTextInput="NumberValidationTextBox" PreviewKeyDown="OnPreviewKeyDown">
+                    <TextBox.Text>
+                        <Binding Path="NumberOfPercent" UpdateSourceTrigger="PropertyChanged">
+                            <Binding.ValidationRules>
+                                <local:NumericValidationRule Type="Double"/>
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+                <TextBlock Text="Минимальное количество городов:" Margin="5" Width="500" 
+                           Visibility="{Binding IsTransportVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <ItemsControl ItemsSource="{Binding TransportFields}" Visibility="{Binding IsTransportVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                     Margin="5" Width="500" ToolTip="Минимальное количество городов"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
                 <CheckBox Content="Поиск оптимальных маршрутов для базовой матрицы" Margin="5" Width="500" IsChecked="{Binding IsBaseMatrix}" />
                 <CheckBox Content="Поиск оптимальных маршрутов для разреженной матрицы" Margin="5" Width="500" IsChecked="{Binding IsReplaceMatrix}" />
-            
                 <TextBlock Text="Матрица:" Margin="5" Width="500" Visibility="{Binding IsMatrixVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-            
                 <ItemsControl ItemsSource="{Binding MatrixFields, UpdateSourceTrigger=PropertyChanged}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <ItemsControl ItemsSource="{Binding}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBox Text="{Binding Path=Value, Mode=TwoWay}" Margin="5" Width="50"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ItemsControl ItemsSource="{Binding}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding Path=Value, Mode=TwoWay}" Margin="5" Width="50"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-
-
-
-            <Button Content="Решение" Command="{Binding Path=SolveCommand}" Margin="5" Width="200"/>
-        </StackPanel>
-    </Grid>
+                <Button Content="Решение" Command="{Binding Path=SolveCommand}" Margin="5" Width="200"/>
+            </StackPanel>
+        </Grid>
     </ScrollViewer>
 </Window>

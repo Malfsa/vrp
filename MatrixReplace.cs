@@ -32,23 +32,25 @@ namespace WpfApp2
                 Array.Reverse(rowValues);
 
                 // Находим индекс элемента, соответствующего 20% от общего числа значений
-                int count = (int)Math.Round(totalValuesPerRow * per/100.0);
+                int count = (int)Math.Round(totalValuesPerRow * per / 100.0);
                 //  MessageBox.Show("Индекс соотв 20 "+count.ToString());
-                double thresholdValue;
-                if (count != 0) thresholdValue = rowValues[count - 1];
-                else thresholdValue = 0;
+               // double thresholdValue;
+                //  if (count != 0) thresholdValue = rowValues[count - 1];
+                //else thresholdValue = 0;
                 // Заменяем самые большие значения на replacementValue
+                if (count != 0) { 
                 for (int j = 0; j < colCount; j++)
                 {
-                    if (j != i && matrix[i, j] >= thresholdValue)
+                    if (j != i && matrix[i, j] >= rowValues[count - 1])
                     {
                         matrix[i, j] = replacementValue;
                     }
-                    else if (i == j)
+                /*    else if (i == j)
                     {
                         matrix[i, j] = 100000;
-                    }
+                    }*/
                 }
+            }
             }
             return matrix;
         }

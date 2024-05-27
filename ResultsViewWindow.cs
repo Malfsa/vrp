@@ -1,5 +1,5 @@
 ﻿
-    using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.Runtime.CompilerServices;
 
@@ -8,16 +8,17 @@
         public class ResultsViewModel : INotifyPropertyChanged
         {
             private double? _optimalValue;
-            private ObservableCollection<string> _routeMatrix;
+            private string _times;
+           // private ObservableCollection<string> _routeMatrix;
             private ObservableCollection<string> _routes;
             private ObservableCollection<string> _distances;
             private double? _optimalValue2;
-            private ObservableCollection<string> _routeMatrix2;
+            private string _times2;
+           // private ObservableCollection<string> _routeMatrix2;
             private ObservableCollection<string> _routes2;
             private ObservableCollection<string> _distances2;
             private bool isBaseMatrix;
             private bool isReplaceMatrix;
-            private bool _isCheck;
             private string _accuracy;
 
         public bool IsBaseMatrix
@@ -54,12 +55,20 @@
                 {
                     _optimalValue = value;
                     OnPropertyChanged();
-              /*  OnPropertyChanged(nameof(Accuracy));
-                OnPropertyChanged(nameof(IsCheck));*/
             }
             }
 
-            public ObservableCollection<string> RouteMatrix
+        public string Times
+        {
+            get => _times;
+            set
+            {
+                _times = value;
+                OnPropertyChanged();
+            }
+        }
+
+       /* public ObservableCollection<string> RouteMatrix
             {
                 get => _routeMatrix;
                 set
@@ -67,7 +76,7 @@
                     _routeMatrix = value;
                     OnPropertyChanged();
                 }
-            }
+            }*/
 
             public ObservableCollection<string> Routes
             {
@@ -86,7 +95,9 @@
                 {
                     _distances = value;
                     OnPropertyChanged();
-                }
+                    //UpdateFields()
+              
+            }
             }
         public double? OptimalValue2
         {
@@ -95,12 +106,18 @@
             {
                 _optimalValue2 = value;
                 OnPropertyChanged();
-                /*OnPropertyChanged(nameof(Accuracy));
-                OnPropertyChanged(nameof(IsCheck));*/
             }
         }
-
-        public ObservableCollection<string> RouteMatrix2
+        public string Times2
+        {
+            get => _times2;
+            set
+            {
+                _times2 = value;
+                OnPropertyChanged();
+            }
+        }
+     /*   public ObservableCollection<string> RouteMatrix2
         {
             get => _routeMatrix2;
             set
@@ -108,7 +125,7 @@
                 _routeMatrix2 = value;
                 OnPropertyChanged();
             }
-        }
+        }*/
 
         public ObservableCollection<string> Routes2
         {
@@ -131,7 +148,6 @@
             }
         }
 
-
         public string Accuracy
         {
             get => _accuracy;
@@ -141,7 +157,17 @@
             }
         }
 
-       // public bool IsCheck => OptimalValue.HasValue && OptimalValue2.HasValue;
+      /*  private void UpdateFields()
+        {
+
+            string s = "";
+            for (int i = 0; i < Distances.Count; i++)
+            {
+                Distances.Add(new MatrixElement { Value });
+            }
+        }*/
+
+        // public bool IsCheck => OptimalValue.HasValue && OptimalValue2.HasValue;
         public event PropertyChangedEventHandler PropertyChanged;
 
             protected void OnPropertyChanged([CallerMemberName] string propertyName = null)

@@ -16,28 +16,107 @@ namespace WpfApp2
             using (StreamWriter writer = new StreamWriter(filePath))
             {
                 // Сохранение типа матрицы
-             //   writer.WriteLine($"SelectedMatrixType,{selectedMatrixType}");
+                //   writer.WriteLine($"SelectedMatrixType,{selectedMatrixType}");
 
-                // Сохранение количества городов и транспорта
+                writer.WriteLine($"Тип матрицы: {selectedMatrixType}");
                 writer.WriteLine($"Количество городов: {numberOfCities}");
                 writer.WriteLine($"Количество транспортных средств: {numberOfTransports}");
                 writer.WriteLine($"Процент замены чисел в разреженной матрице: {numberOfPercent}");
                 // Сохранение транспортных полей
                 writer.WriteLine("Минимальное количество посещенных городов для каждого транспортного средства:");
-                foreach(var row in transportFields)
+                foreach (var field in transportFields)
                 {
-                    writer.WriteLine(row);
+                    writer.WriteLine(field.Value);
                 }
                 // Сохранение матрицы
                 writer.WriteLine("Матрица:");
                 foreach (var row in matrixFields)
                 {
-                    writer.WriteLine(string.Join(" ", row));
+                    writer.WriteLine(string.Join(" ", row.Select(m => m.Value)));
                 }
 
-                
+
             }
         }
+
+       // private const string DataFilePath = "combinedData.txt";
+
+        public static void SaveData(string fileName, string selectedMatrixType, int numberOfCities, int numberOfTransports, int numberOfPercent, ObservableCollection<ObservableCollection<MatrixElement>> matrixFields, ObservableCollection<ObservableInt> transportFields, ResultsViewModel resultsViewModel,MainViewModel mainViewModel)
+        {
+            using (StreamWriter writer = new StreamWriter(fileName))
+            {
+                // Save input data
+               // writer.WriteLine($"Тип матрицы: {selectedMatrixType}");
+                writer.WriteLine($"Количество городов: {numberOfCities}");
+                writer.WriteLine($"Количество транспортных средств: {numberOfTransports}");
+                writer.WriteLine($"Процент замены чисел в разреженной матрице: {numberOfPercent}");
+                // Сохранение транспортных полей
+                writer.WriteLine("Минимальное количество посещенных городов для каждого транспортного средства:");
+                foreach (var field in transportFields)
+                {
+                    writer.WriteLine(field.Value);
+                }
+                // Сохранение матрицы
+                writer.WriteLine("Матрица:");
+                foreach (var row in matrixFields)
+                {
+                    writer.WriteLine(string.Join(" ", row.Select(m => m.Value)));
+                }
+
+                // Save results
+                writer.WriteLine("\nРезультаты:");
+                if ((mainViewModel.IsBaseMatrix) && (mainViewModel.IsReplaceMatrix))
+                {
+                    writer.WriteLine($"Точность: {resultsViewModel.Accuracy}");
+                }
+                if (mainViewModel.IsBaseMatrix) 
+                {
+                   writer.WriteLine("ДЛЯ БАЗОВОЙ МАТРИЦЫ");
+                   writer.WriteLine($"Оптимальная длина маршрута: {resultsViewModel.OptimalValue}");
+                    writer.WriteLine($"Время: {resultsViewModel.Times}");
+                    //   writer.WriteLine("RouteMatrix:");
+                    /* foreach (var route in resultsViewModel.RouteMatrix)
+                     {
+                         writer.WriteLine(route);
+                     }*/
+                    writer.WriteLine("Оптимальные маршруты:");
+                    foreach (var route in resultsViewModel.Routes)
+                    {
+                        writer.WriteLine(route);
+                    }
+                    writer.WriteLine("Оптимальная длина маршрута для каждого транспорта:");
+                    foreach (var distance in resultsViewModel.Distances)
+                    {
+                        writer.WriteLine(distance);
+                    }
+                }
+
+                if (mainViewModel.IsReplaceMatrix)
+                {
+                    writer.WriteLine("ДЛЯ РАЗРЕЖЕННОЙ МАТРИЦЫ");
+                    writer.WriteLine($"Оптимальная длина маршрута: {resultsViewModel.OptimalValue2}");
+                    writer.WriteLine($"Время расчета разреженной матрицы: {resultsViewModel.Times2}");
+                    // writer.WriteLine("RouteMatrix2:");
+                    /* foreach (var route in resultsViewModel.RouteMatrix2)
+                     {
+                         writer.WriteLine(route);
+                     }*/
+                    writer.WriteLine("Оптимальные маршруты:");
+                    foreach (var route in resultsViewModel.Routes2)
+                    {
+                        writer.WriteLine(route);
+                    }
+                    writer.WriteLine("Оптимальная длина маршрута для каждого транспорта:");
+                    foreach (var distance in resultsViewModel.Distances2)
+                    {
+                        writer.WriteLine(distance);
+                    }
+                }
+               
+            }
+        }
+
+
 
         public static void LoadFromFile(string filePath, out string selectedMatrixType,  out int numberOfCities, out int numberOfTransports, out int numberOfPercent, out ObservableCollection<int> transportFields, out ObservableCollection<ObservableCollection<double>> matrixFields)
         {
@@ -57,7 +136,7 @@ namespace WpfApp2
 
                 if (selectedMatrixType == "EUC_2D")
                 {
-
+                    selectedMatrixType = "Матрица координат";
                     int matrixStartIndex = Array.FindIndex(lines, line => line.StartsWith("NODE_COORD_SECTION")) + 1;
                     for (int i = matrixStartIndex; i < matrixStartIndex + numberOfCities; i++)
                     {
@@ -68,6 +147,7 @@ namespace WpfApp2
                 }
                 else if (selectedMatrixType == "EXPLICIT")
                 {
+                    selectedMatrixType = "Матрица расстояний";
                     int matrixStartIndex = Array.FindIndex(lines, line => line.StartsWith("EDGE_WEIGHT_SECTION")) + 1;
                     for (int i = matrixStartIndex; i < matrixStartIndex + numberOfCities; i++)
                     {
@@ -81,6 +161,8 @@ namespace WpfApp2
                 //var lines = File.ReadAllLines(filePath).Where(line => !string.IsNullOrWhiteSpace(line)).ToArray();
                 //selectedMatrixType = (lines.First(line => line.StartsWith("Тип матрицы:")).Split(':')[1].Trim());
                 // Read number of cities
+
+                selectedMatrixType = lines.First(line => line.StartsWith("Тип матрицы:")).Split(':')[1].Trim();
                 numberOfCities = int.Parse(lines.First(line => line.StartsWith("Количество городов:")).Split(':')[1].Trim());
 
                 // Read number of transports
