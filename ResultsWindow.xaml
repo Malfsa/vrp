@@ -3,15 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
          xmlns:local="clr-namespace:WpfApp2"
         Title="Результаты" Height="600" Width="800">
-
     <Window.Resources>
         <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>
-
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
 
         <Grid>
-           
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -20,11 +17,8 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
-                    <!-- Добавьте дополнительные строки, если нужно -->
-
-                </Grid.RowDefinitions>
+            </Grid.RowDefinitions>
             
-            <!-- Results for Base Matrix -->
             <StackPanel Grid.Row="1" Margin="10"  Visibility="{Binding IsBaseMatrix,  Converter={StaticResource BooleanToVisibilityConverter}}">
                 <TextBlock Text="Результаты для базовой матрицы:" FontWeight="Bold" Margin="10"/>
 
@@ -82,8 +76,6 @@
                 </ListBox>
                
             </StackPanel>
-
-           
 
             <Button Grid.Row="5" Content="Закрыть" HorizontalAlignment="Center" Margin="10" Width="100" Click="CloseButton_Click"/>
 

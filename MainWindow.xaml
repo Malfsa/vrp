@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp2"
         mc:Ignorable="d"
+        DataContext="{Binding Main, Source={StaticResource Locator}}"
         Title="Оптимизация маршрутов транспортных средcтв" Height="800" Width="800">
     <Window.Resources>
         <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
@@ -26,9 +27,8 @@
             </Style.Triggers>
         </Style>
     </Window.Resources>
-    <Window.DataContext>
-        <local:MainViewModel/>
-    </Window.DataContext>
+   
+
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
         <Grid>
             <Menu VerticalAlignment="Top">
@@ -38,7 +38,7 @@
                 </MenuItem>
                 <MenuItem Header="Заполнить данные из...">
                     <MenuItem Header="Заполнить данные из файла" Command="{Binding  Path=LoadCommand}"/>
-                    <MenuItem Header="Заполнить данные из базы данных" Command="{Binding  Path=LoadCommand}"/>
+                    <MenuItem Header="Заполнить данные из базы данных" Command="{Binding EditGroup}"/>
                 </MenuItem>
                 <MenuItem Header="Сохранить...">
                     <MenuItem Header="Сохранить вводные данные" Command="{Binding Path=SaveCommand}"/>
@@ -81,6 +81,17 @@
                         </Binding>
                     </TextBox.Text>
                 </TextBox>
+                <ListBox ItemsSource="{Binding Cities}" 
+                Height="200"
+                 SelectionChanged="ListBox_SelectionChanged"
+                 DisplayMemberPath="Name"
+                 SelectionMode="Multiple"
+                 Grid.Row="1"
+                 Visibility="{Binding IsListBoxVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                <Button Content="OK" Command="{Binding InitializeMatrixCommand}" HorizontalAlignment="Center" VerticalAlignment="Top" Width="100" Grid.Row="2" Visibility="{Binding IsOkButtonVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+f
+
                 <TextBlock Text="Минимальное количество городов:" Margin="5" Width="500" 
                            Visibility="{Binding IsTransportVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 <ItemsControl ItemsSource="{Binding TransportFields}" Visibility="{Binding IsTransportVisible, Converter={StaticResource BooleanToVisibilityConverter}}">

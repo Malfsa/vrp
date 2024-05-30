@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
+﻿
 using ILOG.Concert;
 using ILOG.CPLEX;
 using Exception = ILOG.Concert.Exception;
@@ -13,7 +8,7 @@ namespace WpfApp2
     {
         public (Cplex cplex, INumVar[][][] x, INumVar[] Distance) MyCplex(int n, int m, double[,] startc1, double[,] c, int[] w)
         {
-            double[,] startc = CopyMatrix(startc1, n);
+          //  double[,] startc = CopyMatrix(startc1, n);
 
             try
             {
@@ -186,7 +181,6 @@ namespace WpfApp2
             cplex.AddLe(expr1, 1);
             cplex.AddLe(expr2, 1);
         }
-
         private void AddSubTourEliminationConstraints(Cplex cplex, INumVar[][][] x, INumVar[] s, int n, int m)
         {
             for (int k = 0; k < m; k++)

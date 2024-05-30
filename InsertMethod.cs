@@ -13,7 +13,7 @@ namespace WpfApp2
         public static ObservableCollection<ObservableCollection<int>> FindOptimalRoutes(int numCities, int numTransport, double[,] distances, int[] minCityCounts)
         {
           int depotCityIndex = 0;
-            // Check if the sum of minCityCounts is greater than numCities - 1
+          
             if (minCityCounts.Sum() < numCities)
             {
                 Console.WriteLine("Ошибка: Сумма значений minCityCounts превышает количество доступных городов.");

@@ -10,8 +10,23 @@ namespace WpfApp2
         public MainWindow()
         {
             InitializeComponent();
-        }
 
+        }
+        private void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var viewModel = DataContext as MainViewModel;
+            if (viewModel == null) return;
+
+            foreach (var item in e.RemovedItems)
+            {
+                viewModel.SelectedCities.Remove(item as City);
+            }
+
+            foreach (var item in e.AddedItems)
+            {
+                viewModel.SelectedCities.Add(item as City);
+            }
+        }
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
         {
             TextBox textBox = sender as TextBox;

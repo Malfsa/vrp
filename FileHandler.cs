@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -11,6 +12,15 @@ namespace WpfApp2
 {
     public class FileHandler
     {
+
+     //   private readonly MyDbContext _context;
+
+        /*public FileHandler(MyDbContext context)
+        {
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+        }*/
+
+
         public static void SaveToFile(string filePath, string selectedMatrixType, int numberOfCities, int numberOfTransports, double numberOfPercent, ObservableCollection<ObservableCollection<MatrixElement>> matrixFields, ObservableCollection<ObservableInt> transportFields)
         {
             using (StreamWriter writer = new StreamWriter(filePath))
@@ -39,14 +49,14 @@ namespace WpfApp2
             }
         }
 
-       // private const string DataFilePath = "combinedData.txt";
+        // private const string DataFilePath = "combinedData.txt";
 
-        public static void SaveData(string fileName, string selectedMatrixType, int numberOfCities, int numberOfTransports, int numberOfPercent, ObservableCollection<ObservableCollection<MatrixElement>> matrixFields, ObservableCollection<ObservableInt> transportFields, ResultsViewModel resultsViewModel,MainViewModel mainViewModel)
+        public static void SaveData(string fileName, string selectedMatrixType, int numberOfCities, int numberOfTransports, int numberOfPercent, ObservableCollection<ObservableCollection<MatrixElement>> matrixFields, ObservableCollection<ObservableInt> transportFields, ResultsViewModel resultsViewModel, MainViewModel mainViewModel)
         {
             using (StreamWriter writer = new StreamWriter(fileName))
             {
                 // Save input data
-               // writer.WriteLine($"Тип матрицы: {selectedMatrixType}");
+                // writer.WriteLine($"Тип матрицы: {selectedMatrixType}");
                 writer.WriteLine($"Количество городов: {numberOfCities}");
                 writer.WriteLine($"Количество транспортных средств: {numberOfTransports}");
                 writer.WriteLine($"Процент замены чисел в разреженной матрице: {numberOfPercent}");
@@ -69,10 +79,10 @@ namespace WpfApp2
                 {
                     writer.WriteLine($"Точность: {resultsViewModel.Accuracy}");
                 }
-                if (mainViewModel.IsBaseMatrix) 
+                if (mainViewModel.IsBaseMatrix)
                 {
-                   writer.WriteLine("ДЛЯ БАЗОВОЙ МАТРИЦЫ");
-                   writer.WriteLine($"Оптимальная длина маршрута: {resultsViewModel.OptimalValue}");
+                    writer.WriteLine("ДЛЯ БАЗОВОЙ МАТРИЦЫ");
+                    writer.WriteLine($"Оптимальная длина маршрута: {resultsViewModel.OptimalValue}");
                     writer.WriteLine($"Время: {resultsViewModel.Times}");
                     //   writer.WriteLine("RouteMatrix:");
                     /* foreach (var route in resultsViewModel.RouteMatrix)
@@ -112,13 +122,13 @@ namespace WpfApp2
                         writer.WriteLine(distance);
                     }
                 }
-               
+
             }
         }
 
 
 
-        public static void LoadFromFile(string filePath, out string selectedMatrixType,  out int numberOfCities, out int numberOfTransports, out int numberOfPercent, out ObservableCollection<int> transportFields, out ObservableCollection<ObservableCollection<double>> matrixFields)
+        public static void LoadFromFile(string filePath, out string selectedMatrixType, out int numberOfCities, out int numberOfTransports, out int numberOfPercent, out ObservableCollection<int> transportFields, out ObservableCollection<ObservableCollection<double>> matrixFields)
         {
             selectedMatrixType = string.Empty;
             numberOfCities = 0;
@@ -157,7 +167,8 @@ namespace WpfApp2
                     }
                 }
             }
-            else {
+            else
+            {
                 //var lines = File.ReadAllLines(filePath).Where(line => !string.IsNullOrWhiteSpace(line)).ToArray();
                 //selectedMatrixType = (lines.First(line => line.StartsWith("Тип матрицы:")).Split(':')[1].Trim());
                 // Read number of cities
@@ -190,7 +201,44 @@ namespace WpfApp2
             }
         }
 
+        /*  public void LoadCitiesFromDatabase(out string selectedMatrixType, out int numberOfCities, out ObservableCollection<ObservableCollection<double>> matrixFields)
+           {
+               matrixFields = new ObservableCollection<ObservableCollection<double>>();
+               selectedMatrixType = "Матрица расстояний";
 
-           
+               var cities = _context.Cities.ToList();
+               numberOfCities = cities.Count;
+
+               foreach (var city in cities)
+               {
+                   var row = new ObservableCollection<double>
+                   {
+                       city.X,
+                       city.Y
+                   };
+                   matrixFields.Add(row);
+               }
+           }*/
+      /*  public void LoadCitiesFromDatabase(out string selectedMatrixType, out int numberOfCities, out ObservableCollection<ObservableCollection<double>> matrixFields)
+        {
+            matrixFields = new ObservableCollection<ObservableCollection<double>>();
+            selectedMatrixType = "Матрица расстояний";
+
+            var cities = _context.Cities.ToList();
+            numberOfCities = cities.Count;
+
+            foreach (var city in cities)
+            {
+                var row = new ObservableCollection<double> { city.X, city.Y };
+                matrixFields.Add(row);
+            }
+        }*/
+
     }
+
+
+
+
 }
+
+
