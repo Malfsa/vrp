@@ -23,6 +23,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
 using System.Windows.Controls;
+using System.Drawing.Printing;
 
 namespace WpfApp2
 {
@@ -63,14 +64,23 @@ namespace WpfApp2
         public MainViewModel(MyDbContext db) {
 
 
-            _context = db;
-            var cities = _context.Cities.ToList();
-            if (cities == null)
-                throw new InvalidOperationException("Cities data cannot be null");
 
-            Cities = new ObservableCollection<City>(cities);
-            //   _context = context ?? throw new ArgumentNullException(nameof(context));
-            // _fileHandler = fileHandler ?? throw new ArgumentNullException(nameof(fileHandler));
+
+            try
+            {
+                _context = db;
+                var cities = _context.Cities.ToList();
+                if (cities == null)
+                    throw new InvalidOperationException("Cities data cannot be null");
+
+                Cities = new ObservableCollection<City>(cities);
+            }
+            catch (System.Exception ex)
+            {
+                // Log the exception (ex) if needed
+                // Proceed without database connection
+                Cities = new ObservableCollection<City>();
+            }
             MatrixTypes = new ObservableCollection<string> { "Матрица координат", "Матрица расстояний" };
             TransportFields = new ObservableCollection<ObservableInt>();
             MatrixFields = new ObservableCollection<ObservableCollection<MatrixElement>>();
@@ -83,8 +93,9 @@ namespace WpfApp2
             SaveResCommand= new RelayCommand(param => SaveRes());
             SolveCommand = new RelayCommand(param => Solve(), param => CanSolve());
             LoadCommand = new RelayCommand(param => Load());
-            LoadFromDatabaseCommand = new RelayCommand(param => LoadCitiesFromDatabase());
+          //  LoadFromDatabaseCommand = new RelayCommand(param => LoadCitiesFromDatabase());
             InitializeMatrixCommand = new RelayCommand(OnInitializeMatrixCommandExecuted);
+            ShowHelpCommand = new RelayCommand(param => ShowHelp());
 
             //  _mydbContext = db;
 
@@ -92,7 +103,19 @@ namespace WpfApp2
 
         private void OnInitializeMatrixCommandExecuted(object obj)
         {
-   
+            MatrixFields.Clear();
+            InitializeMatrix(out ObservableCollection<ObservableCollection<double>> loadedMatrixFields, out int number);
+            //    SelectedMatrixType = "Матрица координат";
+            NumberOfCities = number;
+            foreach (var row in loadedMatrixFields)
+            {
+                var newRow = new ObservableCollection<MatrixElement>();
+                foreach (var value in row)
+                {
+                    newRow.Add(new MatrixElement { Value = value.ToString() });
+                }
+                MatrixFields.Add(newRow);
+            }
             IsListBoxVisible = false;
             IsOkButtonVisible = false;
         }
@@ -291,6 +314,7 @@ namespace WpfApp2
         public ICommand SaveResCommand { get; }
         public ICommand LoadFromDatabaseCommand { get; }
         public ICommand InitializeMatrixCommand { get; }
+        public ICommand ShowHelpCommand { get; }
         private void SelectMethod1()
         {
             IsMethodSelected = true;
@@ -312,28 +336,12 @@ namespace WpfApp2
         {
             IsListBoxVisible = true;
             IsOkButtonVisible = true;
-            /* var nnnewCity = new City { Name = "wrwr", X = 1, Y = 2 };
-             _context.Cities.Add(nnnewCity);
-             _context.SaveChanges();
-            */
-            // SelectedMatrixType = "Матрица координат";
-
-            MatrixFields.Clear();
-            InitializeMatrix(out ObservableCollection<ObservableCollection<double>> loadedMatrixFields, out int number);
-            //    SelectedMatrixType = "Матрица координат";
-            NumberOfCities = number;
-            foreach (var row in loadedMatrixFields)
-            {
-                var newRow = new ObservableCollection<MatrixElement>();
-                foreach (var value in row)
-                {
-                    newRow.Add(new MatrixElement { Value = value.ToString() });
-                }
-                MatrixFields.Add(newRow);
-            }
-
-
         }
+        private void ShowHelp()
+        {
+            MessageBox.Show("Информация о программе:\n\nВерсия: 1.0\nОписание: Программное обеспечение предназначено для оптимизации маршрутов транспотрных средств.\n", "Справка", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
         private void InitializeMatrix(out ObservableCollection<ObservableCollection<double>> matrixFields, out int number)
         {
 
@@ -341,11 +349,9 @@ namespace WpfApp2
             var selectedCities = SelectedCities.ToList();
             matrixFields = new ObservableCollection<ObservableCollection<double>>();
             if (selectedCities == null || !selectedCities.Any())
-                MessageBox.Show("ЧТОБЫ ИНИЦИАЛИЗИРОВАТЬ ИЗ БД ВЫБЕРИТЕ ГОРОДА!!!!");
+                MessageBox.Show("Вы не выбрали города из базы данных.");
             else
             {
-
-
                 foreach (var city in selectedCities)
                 {
                     var coordinates = new List<double> { city.X, city.Y };
@@ -356,40 +362,6 @@ namespace WpfApp2
 
             }
         }
-
-            /*  private int[,] InitializeMatrix()
-              {
-                  // Пример инициализации матрицы выбранными городами
-                  var selectedCities = Cities.Take(5).ToList(); // например, выбираем первые 5 городов
-                  int[,] matrix = new int[selectedCities.Count, selectedCities.Count];
-
-                  // Заполнение матрицы данными
-                  for (int i = 0; i < selectedCities.Count; i++)
-                  {
-                      for (int j = 0; j < selectedCities.Count; j++)
-                      {
-                          // Пример инициализации матрицы значениями
-                          matrix[i, j] = i * j;
-                      }
-                  }
-                  return matrix;
-
-                  // Далее вы можете использовать матрицу по своему усмотрению
-              }
-            */
-
-            //  string check = "";
-            // var newCity = _cityContext.CitiesName.FirstOrDefault();
-
-            /* var trrr = _cityContext.CitiesName.Where(X => X.Name == "Moscow2").FirstOrDefault();
-             _cityContext.Cities.Add(new Models.City { CityName = trrr, XCoord = 1, YCoord = 2 });
-             _cityContext.SaveChanges();*/
-            /* foreach (var item in _cityContext.Cities.Include(x => x.CityName))
-             {
-                 check += $"Name:{item.CityName.Name} Y:{item.YCoord} X:{item.XCoord}, ";
-             }
-             MessageBox.Show(check);*/
-
 
             private void Save()
         {
@@ -418,6 +390,8 @@ namespace WpfApp2
 
         private void Load()
         {
+            IsListBoxVisible = false;
+            IsOkButtonVisible = false;
             OpenFileDialog openFileDialog = new OpenFileDialog
             {
                 Filter = "Text file (*.txt)|*.txt|TSP file (*.tsp)|*.tsp|All files (*.*)|*.*"
@@ -450,12 +424,7 @@ namespace WpfApp2
             }
         }
 
-        public void LoadCitiesFromDatabase()
-        {
-
-
-        }
-
+        
 
        
         public void OnCitySelectionChanged(SelectionChangedEventArgs e)
@@ -558,50 +527,12 @@ namespace WpfApp2
                     {
                         try
                         {
-                            if (IsMethod1Selected)
-                                SolveWithCplex(matrix, intMatrix, transportWeights);
-                            else
-                        {
-                                var optimalRoutes = GeneticAlgorithm.FindOptimalRoutes(NumberOfCities, NumberOfTransports, matrix, transportWeights);
-                                var routes = new ObservableCollection<string>();
+                            if (IsMethod1Selected) SolveWithCplex(matrix, intMatrix, transportWeights);
 
-                                for (int i = 0; i < optimalRoutes.Count; i++)
-                                {
-                                   // Console.Write($"Transport {i + 1}: ");
-                                    foreach (var city in optimalRoutes[i])
-                                    {
-                                    routes.Add((city.ToString())); 
-                                    }
-                                   // Console.WriteLine();
-                                }
-                            ResultsViewModel_.Routes = routes;
+                            else SolveWithGeneric(matrix);
+                    
 
-                            //var result = InsertMethod.SolveUsingInsertionMethod(NumberOfCities, matrix, intMatrix);
-                            // foreach (var item in result)
-                            //{
-                            //    ResultsViewModel_.Routes.Add(item);
-                            //}
-
-
-                            ResultsViewModel resultViewModel = new ResultsViewModel
-                            {
-                                IsBaseMatrix = true,
-                                // Accuracy = rs.Accuracy,
-                                // OptimalValue2 = rs.OptimalValue2,
-                                // Times2 = $"Время выполнения: {rs.Times2} мс",
-                                // RouteMatrix2 = routematrix,
-
-                                Routes = ResultsViewModel_.Routes
-                              // Distances2 = rs.Distances2
-                          };
-                           
-                            ResultsWindow resultWindow = new ResultsWindow(resultViewModel);
-                            resultWindow.Show();
-                        }
-                                
-                           
-                            
-                        }
+                    }
                         catch (System.Exception ex)
                         {
                             MessageBox.Show("Ошибка: " + ex.Message);
@@ -611,37 +542,22 @@ namespace WpfApp2
                     {
                         try
                         {
+                        if(isMethod1Selected)
                             SolveWithCplex_(intMatrix, matrix, transportWeights);
+                        else SolveWithGeneric_(intMatrix);
                         }
                         catch (System.Exception ex)
                         {
                             MessageBox.Show("Ошибка: " + ex.Message);
                         }
                     }
+
                     if ((!IsReplaceMatrix) && (!IsBaseMatrix))
                     {
                         MessageBox.Show("Выберите матрицы для расчета(базовая, разреженная)");
                         return;
                     }
-
-                
-                else if (IsMethod2Selected)
-                {
-                  
-                    var optimalRoutes =   GeneticAlgorithm.FindOptimalRoutes(NumberOfCities, NumberOfTransports, matrix, transportWeights);
-                    Console.WriteLine("Optimal Routes:");
-                    for (int i = 0; i < optimalRoutes.Count; i++)
-                    {
-                        Console.Write($"Transport {i + 1}: ");
-                        foreach (var city in optimalRoutes[i])
-                        {
-                            Console.Write($"{city} ");
-                        }
-                        Console.WriteLine();
-                    }
-                }
-               
-
+            
             }
         }
 
@@ -708,6 +624,88 @@ namespace WpfApp2
         {
             return TransportFields.Select(o => o.Value).ToArray();
         }
+   
+
+
+
+
+
+
+
+
+        private void SolveWithGeneric(double[,] matrix)
+        {
+            int populationSize = 1000;
+            int generations = 3000;
+            double mutationRate = 0.1;
+            double elitismRate = 0.1;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            int[] bestRoute = GeneticAlgorithm.Run(matrix, populationSize, generations, mutationRate, elitismRate);
+            double bestRouteLength = GeneticAlgorithm.FitnessFunction(bestRoute, matrix);
+            stopwatch.Stop();
+
+            TimeSpan elapsedTime = stopwatch.Elapsed;
+             var routes = new ObservableCollection<string>();
+            var distance = new ObservableCollection<string>();
+
+            ResultsViewModel_.OptimalValue = bestRouteLength;
+            ResultsViewModel_.Times = elapsedTime.TotalMilliseconds.ToString();
+
+            for (int i = 0; i < bestRoute.Length - 1; i++)
+            {
+                routes.Add($"{bestRoute[i]} -> {bestRoute[i + 1]}");
+            }
+            distance.Add(bestRouteLength.ToString());
+            routes.Add($"{bestRoute[bestRoute.Length - 1]+1} -> {bestRoute[0]+1}");
+
+            ResultsViewModel_.Routes=routes;
+            ResultsViewModel_.Distances= distance;
+            matrixfun[0] = bestRouteLength;
+  
+            ShowResultsBase(ResultsViewModel_);
+        }
+
+        private void SolveWithGeneric_(double[,] matrix)
+        {
+            string accuracy;
+            int populationSize = 1000;
+            int generations = 2500;
+            double mutationRate = 0.1;
+            double elitismRate = 0.5;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            double[,] cringe = MatrixReplace.ReplaceTopValuesWith(matrix, 200000, NumberOfPercent);
+            int[] bestRoute = GeneticAlgorithm.Run(cringe, populationSize, generations, mutationRate, elitismRate);
+            double bestRouteLength = GeneticAlgorithm.FitnessFunction(bestRoute, matrix);
+            stopwatch.Stop();
+
+            TimeSpan elapsedTime = stopwatch.Elapsed;
+            var routes = new ObservableCollection<string>();
+            var distance = new ObservableCollection<string>();
+
+            ResultsViewModel_.OptimalValue2 = bestRouteLength;
+            ResultsViewModel_.Times2 = elapsedTime.TotalMilliseconds.ToString();
+
+            for (int i = 0; i < bestRoute.Length - 1; i++)
+            {
+                routes.Add($"{bestRoute[i]} -> {bestRoute[i + 1]}");
+            }
+            distance.Add(bestRouteLength.ToString());
+            routes.Add($"{bestRoute[bestRoute.Length - 1] + 1} -> {bestRoute[0] + 1}");
+           
+            ResultsViewModel_.Routes2 = routes;
+            ResultsViewModel_.Distances2 = distance;
+            matrixfun[1] = bestRouteLength;
+            if ((matrixfun[0] != 0) && (matrixfun[1] != 0))
+            {
+                accuracy = (Math.Abs((matrixfun[1] - matrixfun[0]) / matrixfun[0]) * 100).ToString();
+            }
+            else accuracy = "Расчитайте оптимальное для обеих матриц, чтобы получить точность";
+            ResultsViewModel_.Accuracy = accuracy;
+            ShowResultsSpire(ResultsViewModel_);
+        }
+
 
         private void SolveWithCplex(double[,] matrix, double[,] intMatrix, int[] transportWeights)
         {
@@ -829,23 +827,7 @@ namespace WpfApp2
             }
             return optimalValue;
         }
-       /* private IEnumerable<string> FormatRouteMatrix(Cplex cplex, INumVar[][][] x)
-        {
-            for (int i = 0; i < x.Length; i++)
-            {
-                for (int j = 0; j < x[i].Length; j++)
-                {
-                    for (int k = 0; k < x[i][j].Length; k++)
-                    {
-                        if (cplex.GetValue(x[i][j][k]) > 0.5)
-                        {
-
-                            yield return $"{i} : {j}-{k}: {cplex.GetValue(x[i][j][k])}";
-                        }
-                    }
-                }
-            }
-        }*/
+   
 
         private IEnumerable<string> FormatRoutes(Cplex cplex, INumVar[][][] x)
         {

@@ -12,15 +12,6 @@ namespace WpfApp2
 {
     public class FileHandler
     {
-
-     //   private readonly MyDbContext _context;
-
-        /*public FileHandler(MyDbContext context)
-        {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-        }*/
-
-
         public static void SaveToFile(string filePath, string selectedMatrixType, int numberOfCities, int numberOfTransports, double numberOfPercent, ObservableCollection<ObservableCollection<MatrixElement>> matrixFields, ObservableCollection<ObservableInt> transportFields)
         {
             using (StreamWriter writer = new StreamWriter(filePath))
@@ -84,11 +75,7 @@ namespace WpfApp2
                     writer.WriteLine("ДЛЯ БАЗОВОЙ МАТРИЦЫ");
                     writer.WriteLine($"Оптимальная длина маршрута: {resultsViewModel.OptimalValue}");
                     writer.WriteLine($"Время: {resultsViewModel.Times}");
-                    //   writer.WriteLine("RouteMatrix:");
-                    /* foreach (var route in resultsViewModel.RouteMatrix)
-                     {
-                         writer.WriteLine(route);
-                     }*/
+                    
                     writer.WriteLine("Оптимальные маршруты:");
                     foreach (var route in resultsViewModel.Routes)
                     {
@@ -106,11 +93,7 @@ namespace WpfApp2
                     writer.WriteLine("ДЛЯ РАЗРЕЖЕННОЙ МАТРИЦЫ");
                     writer.WriteLine($"Оптимальная длина маршрута: {resultsViewModel.OptimalValue2}");
                     writer.WriteLine($"Время расчета разреженной матрицы: {resultsViewModel.Times2}");
-                    // writer.WriteLine("RouteMatrix2:");
-                    /* foreach (var route in resultsViewModel.RouteMatrix2)
-                     {
-                         writer.WriteLine(route);
-                     }*/
+                  
                     writer.WriteLine("Оптимальные маршруты:");
                     foreach (var route in resultsViewModel.Routes2)
                     {
@@ -169,9 +152,6 @@ namespace WpfApp2
             }
             else
             {
-                //var lines = File.ReadAllLines(filePath).Where(line => !string.IsNullOrWhiteSpace(line)).ToArray();
-                //selectedMatrixType = (lines.First(line => line.StartsWith("Тип матрицы:")).Split(':')[1].Trim());
-                // Read number of cities
 
                 selectedMatrixType = lines.First(line => line.StartsWith("Тип матрицы:")).Split(':')[1].Trim();
                 numberOfCities = int.Parse(lines.First(line => line.StartsWith("Количество городов:")).Split(':')[1].Trim());
@@ -201,38 +181,6 @@ namespace WpfApp2
             }
         }
 
-        /*  public void LoadCitiesFromDatabase(out string selectedMatrixType, out int numberOfCities, out ObservableCollection<ObservableCollection<double>> matrixFields)
-           {
-               matrixFields = new ObservableCollection<ObservableCollection<double>>();
-               selectedMatrixType = "Матрица расстояний";
-
-               var cities = _context.Cities.ToList();
-               numberOfCities = cities.Count;
-
-               foreach (var city in cities)
-               {
-                   var row = new ObservableCollection<double>
-                   {
-                       city.X,
-                       city.Y
-                   };
-                   matrixFields.Add(row);
-               }
-           }*/
-      /*  public void LoadCitiesFromDatabase(out string selectedMatrixType, out int numberOfCities, out ObservableCollection<ObservableCollection<double>> matrixFields)
-        {
-            matrixFields = new ObservableCollection<ObservableCollection<double>>();
-            selectedMatrixType = "Матрица расстояний";
-
-            var cities = _context.Cities.ToList();
-            numberOfCities = cities.Count;
-
-            foreach (var city in cities)
-            {
-                var row = new ObservableCollection<double> { city.X, city.Y };
-                matrixFields.Add(row);
-            }
-        }*/
 
     }
 

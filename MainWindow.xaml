@@ -44,13 +44,13 @@
                     <MenuItem Header="Сохранить вводные данные" Command="{Binding Path=SaveCommand}"/>
                     <MenuItem Header="Сохранить результаты" Command="{Binding Path=SaveResCommand}"/>
                 </MenuItem>
-                <MenuItem Header="Справка" />
+                <MenuItem Header="Справка" Command="{Binding ShowHelpCommand}"/>
             </Menu>
 
             <StackPanel Name="InputPanel" VerticalAlignment="Top" Margin="10,30,10,10"
                          Visibility="{Binding IsMethodSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <ComboBox ItemsSource="{Binding Path=MatrixTypes}" SelectedItem="{Binding Path=SelectedMatrixType}" Margin="5" Width="500" />
-                <CheckBox Content="Заполнить матрицу расстояний случайными числами" Margin="5" Width="500" IsChecked="{Binding IsRandomFillEnabled}" />
+                <CheckBox Content="Заполнить матрицу случайными числами" Margin="5" Width="500" IsChecked="{Binding IsRandomFillEnabled}" />
                 <TextBox Name="CitiesTextBox" Margin="5" Width="500" ToolTip="Количество городов"
                          PreviewTextInput="NumberValidationTextBox" PreviewKeyDown="OnPreviewKeyDown">
                     <TextBox.Text>
@@ -82,15 +82,16 @@
                     </TextBox.Text>
                 </TextBox>
                 <ListBox ItemsSource="{Binding Cities}" 
-                Height="200"
                  SelectionChanged="ListBox_SelectionChanged"
                  DisplayMemberPath="Name"
                  SelectionMode="Multiple"
                  Grid.Row="1"
+                 Height="120"
                  Visibility="{Binding IsListBoxVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                 <Button Content="OK" Command="{Binding InitializeMatrixCommand}" HorizontalAlignment="Center" VerticalAlignment="Top" Width="100" Grid.Row="2" Visibility="{Binding IsOkButtonVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-f
+
+
 
                 <TextBlock Text="Минимальное количество городов:" Margin="5" Width="500" 
                            Visibility="{Binding IsTransportVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>

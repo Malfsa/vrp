@@ -5,130 +5,154 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 
 namespace WpfApp2
-{
+{           
     public class GeneticAlgorithm
     {
-        public static ObservableCollection<ObservableCollection<int>> FindOptimalRoutes(int numCities, int numTransport, double[,] distances, int[] minCityCounts)
+        private static Random random = new Random();
+
+        // Фитнес-функция: возвращает длину пути
+        public static double FitnessFunction(int[] route, double[,] distanceMatrix)
         {
-          int depotCityIndex = 0;
-          
-            if (minCityCounts.Sum() < numCities)
+            double totalDistance = 0.0;
+            for (int i = 0; i < route.Length - 1; i++)
             {
-                Console.WriteLine("Ошибка: Сумма значений minCityCounts превышает количество доступных городов.");
-                Environment.Exit(1);
+                totalDistance += distanceMatrix[route[i], route[i + 1]];
             }
-
-            var routes = new ObservableCollection<ObservableCollection<int>>();
-            var routeLengths = new List<double>(); // Список для хранения длин маршрутов
-
-            for (int i = 0; i < numTransport; i++)
-            {
-                routes.Add(new ObservableCollection<int>());
-            }
-
-            // Initialize citiesVisited to keep track of visited cities (except depot)
-            var citiesVisited = new HashSet<int> { depotCityIndex };
-
-            // Initialize list to keep track of unvisited cities
-            var unvisitedCities = new List<int>();
-            for (int i = 0; i < numCities; i++)
-            {
-                if (i != depotCityIndex) // Exclude depot city
-                {
-                    unvisitedCities.Add(i);
-                }
-            }
-
-            // Sort unvisited cities by distance from the depot
-            unvisitedCities.Sort((a, b) => distances[depotCityIndex, a].CompareTo(distances[depotCityIndex, b]));
-
-            // Assign depot city to each transport's initial route
-            for (int transportIdx = 0; transportIdx < numTransport; transportIdx++)
-            {
-                routes[transportIdx].Add(depotCityIndex);
-            }
-
-            // Main loop to assign cities to transports ensuring minimum visits
-            foreach (var city in unvisitedCities)
-            {
-                int transportIdx = FindTransportWithMinimumCities(routes, minCityCounts);
-                routes[transportIdx].Add(city);
-                citiesVisited.Add(city);
-            }
-
-            // Ensure that each transport meets its minimum city count requirement
-            for (int transportIdx = 0; transportIdx < numTransport; transportIdx++)
-            {
-                while (routes[transportIdx].Count - 1 < minCityCounts[transportIdx]) // -1 because depot is included
-                {
-                    int nextCity = GetClosestUnvisitedCity(distances, routes[transportIdx], citiesVisited);
-                    if (nextCity == -1) break; // No unvisited cities left
-                    routes[transportIdx].Add(nextCity);
-                    citiesVisited.Add(nextCity);
-                }
-            }
-
-            // Complete routes by returning to depot city and calculate route lengths
-            for (int transportIdx = 0; transportIdx < numTransport; transportIdx++)
-            {
-                routes[transportIdx].Add(depotCityIndex);
-                // Вычисляем длину маршрута
-                double routeLength = 0;
-                for (int i = 0; i < routes[transportIdx].Count - 1; i++)
-                {
-                    int city1 = routes[transportIdx][i];
-                    int city2 = routes[transportIdx][i + 1];
-                    routeLength += distances[city1, city2];
-                }
-                routeLengths.Add(routeLength);
-            }
-
-            // Выводим длину каждого маршрута
-            for (int i = 0; i < numTransport; i++)
-            {
-               MessageBox.Show($"Длина маршрута {i + 1}: {routeLengths[i]}");
-            }
-
-            return routes;
+            // Возвращаемся в начальную точку
+            totalDistance += distanceMatrix[route[route.Length - 1], route[0]];
+            return totalDistance;
         }
 
-        static int FindTransportWithMinimumCities(ObservableCollection<ObservableCollection<int>> routes, int[] minCityCounts)
+        // Инициализация популяции
+        public static List<int[]> InitializePopulation(int populationSize, int numberOfCities)
         {
-            int minIndex = -1;
-            int minCities = int.MaxValue;
-
-            for (int i = 0; i < routes.Count; i++)
+            List<int[]> population = new List<int[]>();
+            for (int i = 0; i < populationSize; i++)
             {
-                int citiesCount = routes[i].Count - 1; // -1 to exclude depot
-                if (citiesCount < minCityCounts[i] && citiesCount < minCities)
+                int[] route = new int[numberOfCities];
+                route[0] = 0; // Начальный город фиксирован
+                var remainingCities = Enumerable.Range(1, numberOfCities - 1).ToList();
+                Shuffle(remainingCities);
+                for (int j = 1; j < numberOfCities; j++)
                 {
-                    minIndex = i;
-                    minCities = citiesCount;
+                    route[j] = remainingCities[j - 1];
                 }
+                population.Add(route);
             }
-
-            return minIndex == -1 ? 0 : minIndex; // If no transport needs more cities, return the first one
+            return population;
         }
 
-        static int GetClosestUnvisitedCity(double[,] distances, ObservableCollection<int> route, HashSet<int> citiesVisited)
+        // Случайное перемешивание списка
+        private static void Shuffle<T>(IList<T> list)
         {
-            int lastCity = route[route.Count - 1];
-            int closestCity = -1;
-            double minDistance = int.MaxValue;
-
-            for (int city = 0; city < distances.GetLength(0); city++)
+            int n = list.Count;
+            for (int i = n - 1; i > 0; i--)
             {
-                if (!citiesVisited.Contains(city) && distances[lastCity, city] < minDistance)
+                int j = random.Next(i + 1);
+                T temp = list[i];
+                list[i] = list[j];
+                list[j] = temp;
+            }
+        }
+
+        // Селекция: турнирный отбор
+        public static int[] TournamentSelection(List<int[]> population, double[,] distanceMatrix)
+        {
+            int tournamentSize = 5;
+            List<int[]> tournament = new List<int[]>();
+            for (int i = 0; i < tournamentSize; i++)
+            {
+                int randomIndex = random.Next(population.Count);
+                tournament.Add(population[randomIndex]);
+            }
+            return tournament.OrderBy(route => FitnessFunction(route, distanceMatrix)).First();
+        }
+
+        // Кроссинговер: упорядоченный кроссинговер (OX1)
+        public static int[] Crossover(int[] parent1, int[] parent2)
+        {
+            int numberOfCities = parent1.Length;
+            int start = random.Next(1, numberOfCities - 1);
+            int end = random.Next(start, numberOfCities - 1);
+
+            int[] child = new int[numberOfCities];
+            Array.Fill(child, -1);
+            child[0] = 0; // Начальный город фиксирован
+
+            for (int i = start; i < end; i++)
+            {
+                child[i] = parent1[i];
+            }
+
+            int parent2Index = 1;
+            for (int i = 1; i < numberOfCities; i++)
+            {
+                if (child[i] == -1)
                 {
-                    closestCity = city;
-                    minDistance = distances[lastCity, city];
+                    while (child.Contains(parent2[parent2Index]))
+                    {
+                        parent2Index++;
+                    }
+                    child[i] = parent2[parent2Index];
                 }
             }
 
-            return closestCity;
+            return child;
+        }
+
+        // Мутация: случайная инверсия подотрезка маршрута (кроме первого города)
+        public static void Mutate(int[] route)
+        {
+            int index1 = random.Next(1, route.Length);
+            int index2 = random.Next(1, route.Length);
+            if (index1 > index2)
+            {
+                var temp = index1;
+                index1 = index2;
+                index2 = temp;
+            }
+
+            Array.Reverse(route, index1, index2 - index1 + 1);
+        }
+
+        // Основной метод генетического алгоритма
+        public static int[] Run(double[,] distanceMatrix, int populationSize, int generations, double mutationRate, double elitismRate)
+        {
+            int numberOfCities = distanceMatrix.GetLength(0);
+            List<int[]> population = InitializePopulation(populationSize, numberOfCities);
+
+            int elitismCount = (int)(populationSize * elitismRate);
+
+            for (int generation = 0; generation < generations; generation++)
+            {
+                List<int[]> newPopulation = new List<int[]>();
+
+                // Элитизм: сохранение лучших решений
+                var sortedPopulation = population.OrderBy(route => FitnessFunction(route, distanceMatrix)).ToList();
+                newPopulation.AddRange(sortedPopulation.Take(elitismCount));
+
+                while (newPopulation.Count < populationSize)
+                {
+                    int[] parent1 = TournamentSelection(population, distanceMatrix);
+                    int[] parent2 = TournamentSelection(population, distanceMatrix);
+                    int[] child = Crossover(parent1, parent2);
+
+                    if (random.NextDouble() < mutationRate)
+                    {
+                        Mutate(child);
+                    }
+
+                    newPopulation.Add(child);
+                }
+
+                population = newPopulation;
+            }
+
+            return population.OrderBy(route => FitnessFunction(route, distanceMatrix)).First();
         }
 
     }
-}
+    }
